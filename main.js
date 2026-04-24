@@ -36,6 +36,7 @@ loadLocalEnv(path.join(__dirname, ".env"));
 const city = process.env.CITY || "Tallinn";
 const latitude = process.env.LATITUDE || "59.4370";
 const longitude = process.env.LONGITUDE || "24.7536";
+const intervalMs = 60 * 1000;
 
 function fetchJson(url) {
   return new Promise((resolve, reject) => {
@@ -64,7 +65,7 @@ function fetchJson(url) {
   });
 }
 
-async function main() {
+async function fetchWeatherOnce() {
   const url = new URL("https://api.open-meteo.com/v1/forecast");
   url.searchParams.set("latitude", latitude);
   url.searchParams.set("longitude", longitude);
@@ -86,7 +87,31 @@ async function main() {
   console.log(message);
 }
 
-main().catch((error) => {
+async function runForever() {
+  let isRunning = false;
+
+  const runOnce = async () => {
+    if (isRunning) {
+      console.log("[INFO] service=weather-bot previous run is still in progress, skipping this tick");
+      return;
+    }
+
+    isRunning = true;
+
+    try {
+      await fetchWeatherOnce();
+    } catch (error) {
+      console.error(`[ERROR] service=weather-bot ${error.message}`);
+    } finally {
+      isRunning = false;
+    }
+  };
+
+  await runOnce();
+  setInterval(runOnce, intervalMs);
+}
+
+runForever().catch((error) => {
   console.error(`[ERROR] service=weather-bot ${error.message}`);
   process.exitCode = 1;
 });
