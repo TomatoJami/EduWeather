@@ -73,7 +73,7 @@ async function fetchAndSend() {
         .setColor(0x0099ff);
 
       await channel.send({ embeds: [embed] });
-      console.log(`[${getTimestamp()}] [INFO] Message sent to Discord`);
+      console.log(`[${getTimestamp()}] [INFO] service=weather-bot Message sent to Discord`);
     }
   }
 }
