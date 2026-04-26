@@ -2,6 +2,10 @@ const fs = require("node:fs");
 const path = require("node:path");
 const https = require("node:https");
 
+function getTimestamp() {
+  return new Date().toLocaleString("ru-RU");
+}
+
 function loadLocalEnv(filePath) {
   if (!fs.existsSync(filePath)) {
     return;
@@ -72,7 +76,7 @@ async function fetchWeatherOnce() {
   url.searchParams.set("current_weather", "true");
   url.searchParams.set("timezone", "auto");
 
-  console.log(`[INFO] service=weather-bot fetching weather for ${city}`);
+  console.log(`[${getTimestamp()}] [INFO] service=weather-bot fetching weather for ${city}`);
 
   const data = await fetchJson(url);
   const weather = data.current_weather;
@@ -83,7 +87,7 @@ async function fetchWeatherOnce() {
 
   const message = `Weather in ${city}: ${weather.temperature}°C, wind ${weather.windspeed} km/h, code ${weather.weathercode}`;
 
-  console.log(`[INFO] service=weather-bot ${message}`);
+  console.log(`[${getTimestamp()}] [INFO] service=weather-bot ${message}`);
   console.log(message);
 }
 
@@ -92,7 +96,7 @@ async function runForever() {
 
   const runOnce = async () => {
     if (isRunning) {
-      console.log("[INFO] service=weather-bot previous run is still in progress, skipping this tick");
+      console.log(`[${getTimestamp()}] [INFO] service=weather-bot previous run is still in progress, skipping this tick`);
       return;
     }
 
@@ -101,7 +105,7 @@ async function runForever() {
     try {
       await fetchWeatherOnce();
     } catch (error) {
-      console.error(`[ERROR] service=weather-bot ${error.message}`);
+      console.error(`[${getTimestamp()}] [ERROR] service=weather-bot ${error.message}`);
     } finally {
       isRunning = false;
     }
@@ -112,6 +116,6 @@ async function runForever() {
 }
 
 runForever().catch((error) => {
-  console.error(`[ERROR] service=weather-bot ${error.message}`);
+  console.error(`[${getTimestamp()}] [ERROR] service=weather-bot ${error.message}`);
   process.exitCode = 1;
 });
