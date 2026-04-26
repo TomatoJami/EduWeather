@@ -1,7 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const https = require("node:https");
-const { Client, GatewayIntentBits, EmbedBuilder } = require("discord.js");
+const { Client, GatewayIntentBits, EmbedBuilder, Events } = require("discord.js");
 
 function getTimestamp() {
   return new Date().toLocaleString("ru-RU");
@@ -57,7 +57,7 @@ async function fetchAndSend() {
   const weather = data.current_weather;
   if (!weather) throw new Error("Weather data missing");
 
-  const logMsg = `Weather in ${city}: ${weather.temperature}°C, wind ${weather.windspeed} km/h`;
+  const logMsg = `Weather in ${city}: ${weather.temperature}°C`;
   console.log(`[${getTimestamp()}] [INFO] service=weather-bot ${logMsg}`);
 
   if (discordToken && discordChannelId) {
@@ -67,7 +67,6 @@ async function fetchAndSend() {
         .setTitle(`🌤️ Weather in ${city}`)
         .addFields(
           { name: "Temperature", value: `${weather.temperature}°C`, inline: true },
-          { name: "Wind", value: `${weather.windspeed} km/h`, inline: true },
           { name: "Updated", value: getTimestamp() }
         )
         .setColor(0x0099ff);
@@ -80,27 +79,26 @@ async function fetchAndSend() {
 
 async function main() {
   if (!discordToken || !discordChannelId) {
-    console.error(`[${getTimestamp()}] [ERROR] Missing Discord credentials`);
-    process.exit(1);
+    throw new Error("Missing Discord credentials in Environment Variables");
   }
 
+  const readyPromise = new Promise(resolve => discordClient.once(Events.ClientReady, resolve));
   await discordClient.login(discordToken);
+  await readyPromise;
   
-  await new Promise(resolve => discordClient.once("ready", resolve));
-  console.log(`[${getTimestamp()}] [INFO] Discord ready`);
+  console.log(`[${getTimestamp()}] [INFO] service=weather-bot Discord client connected`);
 
   try {
     await fetchAndSend();
-  } catch (error) {
-    console.error(`[${getTimestamp()}] [ERROR] service=weather-bot ${error.message}`);
   } finally {
     discordClient.destroy();
-    console.log(`[${getTimestamp()}] [INFO] Task finished, exiting...`);
-    process.exit(0);
+    console.log(`[${getTimestamp()}] [INFO] service=weather-bot Task finished. Exiting.`);
   }
 }
 
-main().catch(err => {
-  console.error(err);
+main().then(() => {
+  process.exit(0);
+}).catch(err => {
+  console.error(`[${getTimestamp()}] [ERROR] service=weather-bot ${err.message}`);
   process.exit(1);
 });
