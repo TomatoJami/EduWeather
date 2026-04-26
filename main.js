@@ -57,7 +57,7 @@ async function fetchAndSend() {
   const weather = data.current_weather;
   if (!weather) throw new Error("Weather data missing");
 
-  const logMsg = `Weather in ${city}: ${weather.temperature}°C`;
+  const logMsg = `Weather in ${city}: ${weather.temperature}°C, wind ${weather.windspeed} km/h`;
   console.log(`[${getTimestamp()}] [INFO] service=weather-bot ${logMsg}`);
 
   if (discordToken && discordChannelId) {
@@ -67,6 +67,7 @@ async function fetchAndSend() {
         .setTitle(`🌤️ Weather in ${city}`)
         .addFields(
           { name: "Temperature", value: `${weather.temperature}°C`, inline: true },
+          { name: "Wind speed", value: `${weather.windspeed} km/h`, inline: true },
           { name: "Updated", value: getTimestamp() }
         )
         .setColor(0x0099ff);
